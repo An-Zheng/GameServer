@@ -83,8 +83,7 @@ public:
     {
         if (!IsOpen())
             return;
-        _readBuffer.Normalize();
-        _readBuffer.EnsureFreeSpace();
+        _readBuffer.FormatBuffer();
         auto self = this->shared_from_this();
         _socket.async_read_some(boost::asio::buffer(_readBuffer.GetWritePointer(), _readBuffer.GetRemainingSpace()),
             [self](boost::system::error_code error, size_t transferredBytes)
@@ -129,7 +128,7 @@ public:
                 CloseSocket();
             return false;
         }
-        //表示对端 处于 半关闭状态
+        //The client may in half-close status
         else if (bytesSent == 0)
         {
             _writeQueue.pop();
