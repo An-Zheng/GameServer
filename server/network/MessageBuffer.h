@@ -1,5 +1,5 @@
-#ifndef __MESSAGEBUFFER_H_
-#define __MESSAGEBUFFER_H_
+#ifndef MESSAGEBUFFER_H
+#define MESSAGEBUFFER_H
 
 #include <cstdint>
 #include <vector>

@@ -1,5 +1,5 @@
-#ifndef __ASYNCACCEPT_H_
-#define __ASYNCACCEPT_H_
+#ifndef ASYNCACCEPT_H
+#define ASYNCACCEPT_H
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/address.hpp>
