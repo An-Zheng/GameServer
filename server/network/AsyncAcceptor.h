@@ -20,12 +20,6 @@ class AsyncAcceptor
 {
 public:
     typedef void(*AcceptCallback)(tcp::socket&& newSocket, uint32_t threadIndex);
-    AsyncAcceptor(boost::asio::io_context& io_context, string const& bindIp, uint16_t port):
-        _acceptor( io_context), _endpoint(boost::asio::ip::address::from_string(bindIp), port),
-        _socket(io_context), _closed(false), _socketFactory(bind(&AsyncAcceptor::DefaultSocketFactory, this))
-    {
-
-    }
     bool Bind()
     {
         boost::system::error_code errorCode;
@@ -101,7 +95,14 @@ public:
         });
     }
 
+protected:
 
+    AsyncAcceptor(boost::asio::io_context& io_context, string const& bindIp, uint16_t port):
+        _acceptor( io_context), _endpoint(boost::asio::ip::address::from_string(bindIp), port),
+        _socket(io_context), _closed(false), _socketFactory(bind(&AsyncAcceptor::DefaultSocketFactory, this))
+    {
+
+    }
 private:
     pair<tcp::socket*, uint32_t> DefaultSocketFactory() { return make_pair( &_socket,0 );}
 
