@@ -35,7 +35,6 @@ public:
             cout << "SocketMgr.StartNetwork " <<err.what() << endl;
             return false;
         }
-
         if (!acceptor->Bind())
         {
             cout << "StartNetwork failed to bind socket acceptor " << endl;
@@ -44,10 +43,10 @@ public:
 
         _acceptor = std::move(acceptor);
         _threadCount = threadCount;
-        _threads = CreateThreads();
+        _threads.reset(CreateThreads().release());
 
         for (int32_t i = 0; i < _threadCount; ++i) 
-            _threads.Start();
+            _threads[i].Start();
         _acceptor->SetSocketFactory([this](){return GetSocketForAccept();});
         return true;
     }
@@ -68,7 +67,7 @@ public:
     {
         if (_threadCount != 0)
             for(int32_t i = 0; i < _threadCount; ++i)
-                _threads[i].Wait();
+                _threads[i].DestroyThread();
     }
 
     virtual void OpenNewSocket(tcp::socket&& socket, u_int32_t threadIndex)
@@ -98,13 +97,12 @@ public:
         uint32_t threadIndex = SelectThreadWithMinConnections();
         return std::make_pair(_threads[threadIndex].GetSocketForAccept(), threadIndex);
     }
-protected:
+
     SocketMgr() : _threadCount(0)
     {   
 
     }
-
-    virtual shared_ptr<NetworkThread<SocketType>> CreateThreads() const = 0;
+    virtual unique_ptr<NetworkThread<SocketType>[]> CreateThreads() const = 0;
     unique_ptr<AsyncAcceptor> _acceptor;
     unique_ptr<NetworkThread<SocketType>[]> _threads;
     int32_t _threadCount;

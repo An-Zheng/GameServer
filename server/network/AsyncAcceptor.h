@@ -9,6 +9,7 @@
 #include <iostream>
 #include <boost/asio/ip/tcp.hpp>
 #include <functional>
+#include <memory>
 #include <ostream>
 #include <utility>
 #include <functional>
@@ -65,13 +66,13 @@ public:
         }
     }
 
-    void SetSocketFactory(function<pair<tcp::socket*, uint32_t>()> func) { _socketFactory = func;}
+    void SetSocketFactory(function<pair<shared_ptr<tcp::socket>, uint32_t>()> func) { _socketFactory = func;}
 
     template<AcceptCallback acceptCallback>
     void AsyncAcceptWithCallback()
     {
         auto result = _socketFactory();
-        tcp::socket* socket = result.first;
+        shared_ptr<tcp::socket> socket = result.first;
         uint32_t threadIndex = result.second;
 
         _acceptor.async_accept(*socket, [this, socket, threadIndex](boost::system::error_code error)
@@ -95,22 +96,26 @@ public:
         });
     }
 
-protected:
+
 
     AsyncAcceptor(boost::asio::io_context& io_context, string const& bindIp, uint16_t port):
+        _ioContext(io_context),
         _acceptor( io_context), _endpoint(boost::asio::ip::address::from_string(bindIp), port),
-        _socket(io_context), _closed(false), _socketFactory(bind(&AsyncAcceptor::DefaultSocketFactory, this))
+        _closed(false), _socketFactory(bind(&AsyncAcceptor::DefaultSocketFactory, this))
     {
 
     }
 private:
-    pair<tcp::socket*, uint32_t> DefaultSocketFactory() { return make_pair( &_socket,0 );}
+    std::pair<std::shared_ptr<tcp::socket>, uint32_t> DefaultSocketFactory() {
+    return std::make_pair(
+        std::make_shared<tcp::socket>(_ioContext), 0);
+    }
 
+    boost::asio::io_context& _ioContext;
     tcp::acceptor _acceptor;
     tcp::endpoint _endpoint;
-    tcp::socket _socket;
     atomic<bool> _closed;
-    function<pair<tcp::socket*, uint32_t>()> _socketFactory;
+    function<pair<shared_ptr<tcp::socket>, uint32_t>()> _socketFactory;
 };
 
 

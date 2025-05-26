@@ -44,20 +44,6 @@ public:
         _socket.close(error);
     }
 
-    virtual void Start() = 0;
-
-    virtual bool Update()
-    {
-        if (_closed)
-            return false;
-        if(_isWritingAsync || _writeQueue.empty())
-            return true;
-
-        for (; HandleWriteQueue();)
-            ;
-        return true;
-    }
-
     void CloseSocket()
     {
         if (_closed.exchange(true))
@@ -91,11 +77,6 @@ public:
             self->ReadHandlerInternal(error, transferredBytes);
         }); 
     }
-    void SendMessage(MessageBuffer&& buffer)
-    {
-        _writeQueue.push(std::move(buffer));
-    }
-
 
     bool AsynWriteFromQueue()
     {
@@ -108,6 +89,7 @@ public:
             self->_isWritingAsync = false;
             self->HandleWriteQueue();
         });
+        return false;
     }
 
     bool HandleWriteQueue()
@@ -143,9 +125,26 @@ public:
         _writeQueue.pop();
         return !_writeQueue.empty();
     }
+    MessageBuffer& GetReadBuffer() { return _readBuffer; }
+    virtual void Start() = 0;
+    virtual bool Update()
+    {
+        if (_closed)
+            return false;
+        if(_isWritingAsync || _writeQueue.empty())
+            return true;
+
+        for (; HandleWriteQueue();)
+            ;
+        return true;
+    }
 
 protected:
     virtual void ReadHandler() = 0;
+    void SendMessage(MessageBuffer&& buffer)
+    {
+        _writeQueue.push(std::move(buffer));
+    }
     virtual void OnClose() { }
 private:
     void ReadHandlerInternal(boost::system::error_code error, size_t transferedBytes)
