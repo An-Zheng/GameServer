@@ -18,6 +18,10 @@ template<class SocketType>
 class SocketMgr
 {
 public:
+    SocketMgr() : _threadCount(0)
+    {   
+
+    }
     virtual ~SocketMgr()
     {
 
@@ -62,13 +66,8 @@ public:
         _threads.reset();
         _threadCount = 0;
     }
-
-    void Wait()
-    {
-        if (_threadCount != 0)
-            for(int32_t i = 0; i < _threadCount; ++i)
-                _threads[i].DestroyThread();
-    }
+protected:
+    virtual unique_ptr<NetworkThread<SocketType>[]> CreateThreads() const = 0;
 
     virtual void OpenNewSocket(tcp::socket&& socket, u_int32_t threadIndex)
     {
@@ -86,24 +85,27 @@ public:
     }
 
     int32_t GetNetworkThreadCount() const {return _threadCount;}
+
+    std::pair<shared_ptr<tcp::socket>, uint32_t> GetSocketForAccept()
+    {
+        uint32_t threadIndex = SelectThreadWithMinConnections();
+        return std::make_pair(_threads[threadIndex].GetSocketForAccept(), threadIndex);
+    }
+    unique_ptr<AsyncAcceptor> _acceptor;
+private:
     uint32_t SelectThreadWithMinConnections() const 
     {
         uint32_t min = 0;
 
         return min;
     }
-    std::pair<shared_ptr<tcp::socket>, uint32_t> GetSocketForAccept()
+    void Wait()
     {
-        uint32_t threadIndex = SelectThreadWithMinConnections();
-        return std::make_pair(_threads[threadIndex].GetSocketForAccept(), threadIndex);
+        if (_threadCount != 0)
+            for(int32_t i = 0; i < _threadCount; ++i)
+                _threads[i].DestroyThread();
     }
 
-    SocketMgr() : _threadCount(0)
-    {   
-
-    }
-    virtual unique_ptr<NetworkThread<SocketType>[]> CreateThreads() const = 0;
-    unique_ptr<AsyncAcceptor> _acceptor;
     unique_ptr<NetworkThread<SocketType>[]> _threads;
     int32_t _threadCount;
 };

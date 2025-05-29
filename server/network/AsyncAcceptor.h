@@ -20,6 +20,13 @@ using namespace std;
 class AsyncAcceptor
 {
 public:
+    AsyncAcceptor(boost::asio::io_context& io_context, string const& bindIp, uint16_t port):
+        _ioContext(io_context),
+        _acceptor( io_context), _endpoint(boost::asio::ip::address::from_string(bindIp), port),
+        _closed(false), _socketFactory(bind(&AsyncAcceptor::DefaultSocketFactory, this))
+    {
+
+    }
     typedef void(*AcceptCallback)(tcp::socket&& newSocket, uint32_t threadIndex);
     bool Bind()
     {
@@ -98,13 +105,7 @@ public:
 
 
 
-    AsyncAcceptor(boost::asio::io_context& io_context, string const& bindIp, uint16_t port):
-        _ioContext(io_context),
-        _acceptor( io_context), _endpoint(boost::asio::ip::address::from_string(bindIp), port),
-        _closed(false), _socketFactory(bind(&AsyncAcceptor::DefaultSocketFactory, this))
-    {
 
-    }
 private:
     std::pair<std::shared_ptr<tcp::socket>, uint32_t> DefaultSocketFactory() {
     return std::make_pair(

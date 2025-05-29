@@ -48,7 +48,37 @@ public:
         _thread = make_unique<thread>(&NetworkThread::Run, this);
         return true;
     }
-        void Run()
+
+    void Stop()
+    {
+        _stopped = true;
+        _ioContext.stopped();
+    }
+
+    void DestroyThread()
+    {
+        if (_thread && _thread->joinable()) 
+        {
+            _thread->join();
+        }
+        _thread.reset();
+    }
+
+    int32_t GetConnectionCount() const
+    {
+        return _connections;
+    }
+    virtual void AddSocket(shared_ptr<SocketType> sock)
+    {
+        lock_guard<mutex> lock(_newSocketsLock);
+
+        ++_connections;
+        _newSockets.push_back(sock);
+    }
+
+    shared_ptr<tcp::socket> GetSocketForAccept() { return make_shared<tcp::socket>(_ioContext);};
+protected:
+    void Run()
     {
         _updateTimer.expires_from_now(boost::posix_time::milliseconds(1));
         _updateTimer.async_wait([this](boost::system::error_code const& ){this->Update();});
@@ -81,35 +111,6 @@ public:
         }), _sockets.end());
     }
 
-    void Stop()
-    {
-        _stopped = true;
-        _ioContext.stopped();
-    }
-
-    void DestroyThread()
-    {
-        if (_thread && _thread->joinable()) 
-        {
-            _thread->join();
-        }
-        _thread.reset();
-    }
-
-    int32_t GetConnectionCount() const
-    {
-        return _connections;
-    }
-    virtual void AddSocket(shared_ptr<SocketType> sock)
-    {
-        lock_guard<mutex> lock(_newSocketsLock);
-
-        ++_connections;
-        _newSockets.push_back(sock);
-    }
-
-    shared_ptr<tcp::socket> GetSocketForAccept() { return make_shared<tcp::socket>(_ioContext);};
-protected:
     void AddNewSockets()
     {
         lock_guard<mutex> lock(_newSocketsLock);
