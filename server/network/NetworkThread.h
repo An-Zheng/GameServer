@@ -24,7 +24,6 @@ public:
     NetworkThread(): 
     _thread(nullptr),
     _ioContext(1),
-    _acceptSocket(_ioContext),
     _updateTimer(_ioContext),
     _connections(0),
     _stopped(false)
@@ -136,7 +135,6 @@ private:
 
     unique_ptr<thread> _thread;
     boost::asio::io_context _ioContext;
-    tcp::socket _acceptSocket;
 
     SocketContainer _sockets;
     mutex _newSocketsLock;
