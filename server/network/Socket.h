@@ -7,6 +7,7 @@
 #include <boost/asio/buffer.hpp>
 #include <boost/asio/error.hpp>
 #include <boost/asio/ip/address.hpp>
+#include <boost/asio/socket_base.hpp>
 #include <boost/system/error_code.hpp>
 #include <cstddef>
 #include <cstdint>
@@ -66,6 +67,7 @@ public:
         if (_closed.exchange(true))
             return;
         boost::system::error_code shutdownError;
+        _socket.shutdown(boost::asio::socket_base::shutdown_send, shutdownError);
         if (shutdownError)
             std::cout << "Socket::CloseSocket error when shutting down" << shutdownError.message().c_str() << std::endl;
         OnClose(); 
