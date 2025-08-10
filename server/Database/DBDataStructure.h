@@ -1,6 +1,6 @@
 #ifndef DBDATASTRUCTURE_H
 #define DBDATASTRUCTURE_H
-#include <iostream>
+#include "../Utilities/Util.h"
 
 enum MapTypes                                               // Lua_IsInInstance
 {
