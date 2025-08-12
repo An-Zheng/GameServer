@@ -5,4 +5,5 @@
 #include <string>
 #include <cmath>
 #include <utility>
+#include <atomic>
 #endif

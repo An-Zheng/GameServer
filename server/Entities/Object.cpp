@@ -1,65 +1,41 @@
-#ifndef ENTITIES_H
-#define ENTITIES_H
-#include "../Utilities/Util.h"
-#include "../Maps/Map.h"
-class ObjectGuid
+#include "Object.h"
+Object::Object()
 {
-public:
-    ObjectGuid() = default;
-    explicit ObjectGuid(uint64_t guid) : _guid(guid) {}
-    uint64_t   GetUID() const { return _guid; }
-    bool operator == (ObjectGuid const & r ) const { return _guid == r._guid; }
-    bool operator != (ObjectGuid const & r ) const { return _guid != r._guid; } 
-private:
-    uint64_t _guid;
-};
-enum TypeID : uint16_t
+    m_inWorld = false;
+    m_guid = ++_counter;
+    m_typeId = TYPEID_OBJECT;
+}
+void WorldObject::AddToWorld() 
 {
-    TYPEID_OBJECT      = 0,
-    TYPEID_ITEM        = 1,
-    TYPEID_PLAYER      = 2,
-    TYPEID_CORPSE      = 3
+    Object::AddToWorld();
+    // TODO: 挂接网格/可见性/实例脚本
+}
+void WorldObject::RemoveFromWorld()
+{
+    // TODO: 脱离网格/可见性/实例脚本
+    Object::RemoveFromWorld();
+}
+WorldObject::WorldObject(std::string name ) : Object() ,m_name(name){
+    m_map = nullptr;
 };
 
-class Object
+float WorldObject::GetDistance( WorldObject const *other)
 {
-public:
-    Object() = default;
-    virtual ~Object() = default;
-    bool IsInWorld() const { return _inWorld; }
-    virtual void AddToWorld()      { _inWorld = true;  }
-    virtual void RemoveFromWorld() { _inWorld = false; }
-
-    ObjectGuid GetGUID() const { return _guid; }
-    void SetGUID(ObjectGuid const &g) { _guid = g; }
-private:
-    bool      _inWorld = false;
-    ObjectGuid _guid{};
+    if (!other) return 0.f;
+    float dx = x - other->x, dy = y - other->y, dz = z - other->z;
+    return std::sqrt(dx*dx + dy*dy + dz*dz);
 };
 
-struct WorldLocation
+FightUnit::FightUnit(std::string name):WorldObject(name)
 {
-    uint32_t mapId = 0;
-    float x = 0.f, y = 0.f, z = 0.f, o = 0.f; // orientation
-
-    void Relocate(float nx, float ny, float nz, float no)
-    {
-        x = nx; y = ny; z = nz; o = no;
-    }
+    m_typeId = TYPEID_FIGHT_UNIT;
+    m_maxHealth = 100;
+    m_health    = 100;
+    m_maxPower  = 100;
+    m_power     = 100;
 };
 
-class WorldObject : public Object, public WorldLocation
+Player::Player(std::string name):FightUnit(name)
 {
-
-public:
-    explicit WorldObject(std::string name ) : _name(name){};
-    ~WorldObject() override = default;
-    // 地图绑定
-    virtual void SetMap(Map* m) { _map = m; }
-    Map* GetMap() const { return _map; }
-    
-private:
-    Map*        _map = nullptr;
-    std::string _name;
-};
-#endif
+    m_typeId = TYPEID_PLAYER;
+}
