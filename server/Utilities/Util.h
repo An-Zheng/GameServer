@@ -6,4 +6,5 @@
 #include <cmath>
 #include <utility>
 #include <atomic>
+#include <vector>
 #endif
